@@ -1,0 +1,127 @@
+<jittershader name="fill-flat-quads">
+	<description>Default Shader </description>
+	<param name="pos" 	type="vec3" state="POSITION" />
+	<param name="nor" 	type="vec3" state="NORMAL" />
+	<param name="tan" 	type="vec3" state="TANGENT" />
+	<param name="bit" 	type="vec3" state="BITANGENT" />
+	<param name="MVP" 	type="mat4" state="MODELVIEW_PROJECTION_MATRIX" />
+	<param name="MV" 	type="mat4" state="MODELVIEW_MATRIX" />
+	<param name="P" 	type="mat4" state="PROJECTION_MATRIX" />
+	<param name="M" 	type="mat4" state="WORLD_MATRIX" />
+	<param name="showNormal" 	type="int" default="1" />
+	<param name="showTangent" 	type="int" default="1" />
+	<param name="showBitangent" type="int" default="1" />
+	<param name="scale" type="float" default="0.1" />
+	<language name="glsl" version="1.5">
+		<bind param="pos" 	program="vp" />
+		<bind param="nor" 	program="vp" />
+		<bind param="tan" 	program="vp" />
+		<bind param="bit" 	program="vp" />
+		<bind param="MVP" 	program="gp" />
+		<bind param="MV" 	program="gp" />
+		<bind param="P" 	program="gp" />
+		<bind param="M" 	program="gp" />
+		<bind param="showNormal" 	program="gp" />
+		<bind param="showTangent" 	program="gp" />
+		<bind param="showBitangent" program="gp" />	
+		<bind param="scale" program="gp" />	
+		<program name="vp" type="vertex">
+<![CDATA[
+#version 330 core
+in vec3 pos, nor, tan, bit;
+
+out jit_PerVertex {
+	flat vec3 nor;
+	flat vec3 tan;
+	flat vec3 bit;
+} jit_out;
+
+void main() {	
+	gl_Position = vec4(pos, 1.);	
+	jit_out.nor = nor;
+	jit_out.tan = tan;
+	jit_out.bit = cross(tan, nor);
+}
+]]>
+		</program>
+		<program name="gp" type="geometry">
+<![CDATA[
+#version 330 core
+
+layout (triangles) in;
+layout (line_strip, max_vertices=100) out;
+
+uniform mat4 MVP, MV, P, M;
+uniform int showNormal, showTangent, showBitangent;
+uniform float scale;
+
+in jit_PerVertex {
+	flat vec3 nor;
+	flat vec3 tan;
+	flat vec3 bit;
+} jit_in[];
+
+out jit_PerVertex {
+	smooth vec4 col;	
+};
+
+void main() {
+
+	for(int i = 0; i < 3; i++){
+
+		if(showNormal == 1){
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz + jit_in[i].nor*scale , 1.);
+			col = vec4(0., 0., 1., 1.);
+			EmitVertex();
+
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz, 1.);
+			col = vec4(0., 0., 1., 1.);
+			EmitVertex();
+
+			EndPrimitive();	
+		}
+
+		if(showTangent == 1){
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz + jit_in[i].tan*scale , 1.);
+			col = vec4(1., 0., 0., 1.);
+			EmitVertex();
+
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz, 1.);
+			col = vec4(1., 0., 0., 1.);
+			EmitVertex();
+
+			EndPrimitive();			
+		}
+	
+		if(showBitangent == 1){
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz + jit_in[i].bit*scale , 1.);
+			col = vec4(0., 1., 0., 1.);
+			EmitVertex();
+
+			gl_Position = MVP * vec4( gl_in[i].gl_Position.xyz, 1.);
+			col = vec4(0., 1., 0., 1.);
+			EmitVertex();
+
+			EndPrimitive();			
+		}
+	}
+}
+]]>
+		</program>
+<program name="fp" type="fragment">
+<![CDATA[
+#version 330 core
+
+in jit_PerVertex {
+	smooth vec4 col;
+} jit_in;
+
+out vec4 color;
+
+void main() {
+	color = jit_in.col;
+}	
+]]>
+		</program>
+	</language>
+</jittershader>

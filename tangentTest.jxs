@@ -1,0 +1,54 @@
+<jittershader name="fill-flat-quads">
+	<description>Default Shader </description>
+	<param name="pos" type="vec3" state="POSITION" />
+	<param name="nor" type="vec3" state="NORMAL" />
+	<param name="tan" type="vec3" state="TANGENT" />
+	<param name="bit" type="vec3" state="BITANGENT" />
+	<param name="uv"  type="vec2" state="TEXCOORD" />
+	<param name="MVP" type="mat4" state="MODELVIEW_PROJECTION_MATRIX" />
+	<param name="showUVx" type="float" default="1." />
+	<param name="showUVy" type="float" default="1." />
+	<language name="glsl" version="1.5">
+		<bind param="pos" program="vp" />
+		<bind param="nor" program="vp" />
+		<bind param="tan" program="vp" />
+		<bind param="bit" program="vp" />
+		<bind param="uv"  program="vp" />
+		<bind param="MVP" program="vp" />
+		<bind param="showUVx" program="vp" />
+		<bind param="showUVy" program="vp" />
+		<program name="vp" type="vertex">
+<![CDATA[
+#version 330 core
+uniform mat4 MVP;
+uniform float showUVx, showUVy;
+in vec3 pos, nor, tan, bit;
+in vec2 uv;
+
+out jit_PerVertex {
+	smooth vec3 col;	
+} jit_out;
+
+void main() {	
+	gl_Position = MVP * vec4(pos*0.999, 1.);	
+	jit_out.col = vec3(uv * vec2(showUVx, showUVy), 0.);
+}
+]]>
+		</program>
+		<program name="fp" type="fragment">
+<![CDATA[
+#version 330 core
+
+in jit_PerVertex {
+	smooth vec3 col;
+} jit_in;
+
+out vec4 color;
+
+void main() {
+	color = vec4(jit_in.col, 1.);
+}	
+]]>
+		</program>
+	</language>
+</jittershader>
